@@ -1,32 +1,9 @@
-# Sistema de Óptica Amaru
-
-Este es el repositorio principal del sistema desarrollado para Óptica Amaru.
-
-
 ## Configuración inicial
 
 1. Clona el repositorio.
 
 ```
-git clone https://github.com/jvielmac/sistema-optica-amaru.git
-```
-
-2. Crea un nuevo ambiente virtual. Reemplaza `python` por `py` en caso de error si estas en Windows.
-
-```
-python -m venv .venv
-```
-
-3. Activa el ambiente virtual. Debes hacer esto cada vez que necesites usar Django.
-
-```
-.\.venv\Scripts\activate
-```
-
-4. Instala los paquetes necesarios.
-
-```
-pip install -r requirements.txt
+git clone https://github.com/jvielmac/aplicacion-android-iot.git
 ```
 
 ## Guía de contribución y uso de Git

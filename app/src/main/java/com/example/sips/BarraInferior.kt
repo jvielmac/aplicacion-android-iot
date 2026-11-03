@@ -9,21 +9,16 @@ import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.ComposeNavigator
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 
-import com.example.sips.MainActivity
-
+// Barra inferior: Estado Actual / Alertas
+// pantallaActual: para saber qué botón marcar como seleccionado
+// onCambiarPantalla: función que entrega MainActivity para cambiar de pantalla
 @Composable
-fun NavBar() {
+fun NavBar(pantallaActual: String, onCambiarPantalla: (String) -> Unit) {
     NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
-        val navController = rememberNavController()
 
         NavigationBarItem(
-            selected = true,
+            selected = pantallaActual == "EstadoActual",
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Speed,
@@ -31,11 +26,11 @@ fun NavBar() {
                 )
             },
             label = { Text("Estado Actual") },
-            onClick = { },
+            onClick = { onCambiarPantalla("EstadoActual") },
         )
 
         NavigationBarItem(
-            selected = false,
+            selected = pantallaActual == "HistorialAlertas",
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.WarningAmber,
@@ -43,7 +38,7 @@ fun NavBar() {
                 )
             },
             label = { Text("Alertas") },
-            onClick = { },
+            onClick = { onCambiarPantalla("HistorialAlertas") },
         )
     }
 }

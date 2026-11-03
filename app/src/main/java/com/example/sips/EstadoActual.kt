@@ -1,7 +1,11 @@
 package com.example.sips
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,11 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun EstadoActual() {
-    Scaffold( // ToDo: Comprender esto epico
-        // Barra inferior: Estado Actual / Alertas
-        bottomBar = { NavBar() }
-    ) { innerPadding -> // ToDo: Comprender esto
+fun EstadoActual(pantallaActual: String, onCambiarPantalla: (String) -> Unit) {
+    // Scaffold: estructura base de la pantalla, con la barra de navegación abajo
+    Scaffold(
+        bottomBar = { NavBar(pantallaActual, onCambiarPantalla) }
+    ) { innerPadding -> // innerPadding: espacio para que la barra no tape el contenido
 
         Column(modifier = Modifier
             .fillMaxSize()
@@ -88,9 +92,22 @@ fun EstadoActual() {
 
 @Composable
 fun TarjetaSensor(nombre: String, valor: String, alerta: Boolean, icono: ImageVector) {
+    // Contexto de Android, necesario para mostrar el Toast
+    val context = LocalContext.current
+
     Row(modifier = Modifier
         .fillMaxWidth()
+        .clip(RoundedCornerShape(12.dp))
         .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+        // Al tocar la tarjeta se muestra un Toast con el estado del sensor
+        .clickable {
+            val mensaje = if (alerta) {
+                "$nombre: $valor - fuera de rango"
+            } else {
+                "$nombre: $valor - todo OK"
+            }
+            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+        }
         .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically)
     {

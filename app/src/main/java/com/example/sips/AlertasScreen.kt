@@ -96,7 +96,7 @@ fun TarjetaAlerta(icono: ImageVector, titulo: String, valor: String, hora: Strin
 @Composable
 fun AlertasPreview() {
     Scaffold(
-        bottomBar = { NavBar() }
+        bottomBar = { NavBar(pantallaActual = "HistorialAlertas", onCambiarPantalla = {}) }
     ) { innerPadding ->
         AlertasScreen(modifier = Modifier.padding(innerPadding))
     }

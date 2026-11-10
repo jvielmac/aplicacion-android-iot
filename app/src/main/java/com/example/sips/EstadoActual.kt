@@ -1,8 +1,10 @@
 package com.example.sips
 
 import android.widget.Toast
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -38,7 +40,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun EstadoActual(pantallaActual: String, onCambiarPantalla: (String) -> Unit) {
+fun EstadoActual(
+    pantallaActual: String,
+    onCambiarPantalla: (String) -> Unit,
+    sensores: List<Sensor>,
+    onCambiarValor: (Int, Int) -> Unit = { _, _ -> },
+    onSoltar: (Int) -> Unit = {}
+) {
     // Scaffold: estructura base de la pantalla, con la barra de navegación abajo
     Scaffold(
         bottomBar = { NavBar(pantallaActual, onCambiarPantalla) }
@@ -60,32 +68,34 @@ fun EstadoActual(pantallaActual: String, onCambiarPantalla: (String) -> Unit) {
                 fontWeight = FontWeight.Bold)
             Text("Actualizado hace 3 min", fontSize = 11.sp)
 
-            // Foto sala
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp)
-                .background(Color.LightGray),
-                contentAlignment = Alignment.Center)
-            {
-                Text("Foto de la sala")
-            }
+            // Foto de la sala (res/drawable/foto_sala.jpg)
+            Image(
+                painter = painterResource(id = R.drawable.foto_sala),
+                contentDescription = "Foto de la sala",
+                contentScale = ContentScale.Crop, // recorta para llenar el espacio sin deformarse
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
 
             // Espacio vacío del diseño
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Tarjetas de sensores
-            TarjetaSensor(
-                "Luminosidad", "300 Lux", alerta = false,
-                icono = Icons.Outlined.Lightbulb
-            )
-            TarjetaSensor(
-                "Temperatura", "15° C", alerta = true,
-                icono = Icons.Outlined.Thermostat
-            )
-            TarjetaSensor(
-                "CO2", "520 ppm", alerta = false,
-                icono = Icons.Outlined.Co2
-            )
+            // Tarjetas de sensores: una por cada sensor de la lista
+            for (sensor in sensores) {
+                TarjetaSensor(
+                    nombre = sensor.nombre,
+                    valor = sensor.valorTexto(),
+                    alerta = sensor.fueraDeRango(),
+                    icono = sensor.icono
+                )
+            }
+
+            // Panel para probar las notificaciones (ver PanelPruebas.kt)
+            if (MODO_PRUEBAS) {
+                PanelPruebas(sensores, onCambiarValor, onSoltar)
+            }
         }
     }
 }

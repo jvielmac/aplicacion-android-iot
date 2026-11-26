@@ -1,8 +1,10 @@
 package com.example.sips
 
 import android.widget.Toast
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -25,7 +27,9 @@ import androidx.compose.material.icons.outlined.Co2
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +42,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun EstadoActual(pantallaActual: String, onCambiarPantalla: (String) -> Unit) {
+fun EstadoActual(
+    pantallaActual: String,
+    onCambiarPantalla: (String) -> Unit,
+    sensores: List<Sensor>,
+    onCambiarValor: (Int, Int) -> Unit = { _, _ -> },
+    onSoltar: (Int) -> Unit = {},
+    estado: EstadoConexion = EstadoConexion.DESCONECTADO,
+    nombreDispositivo: String = "",
+    ultimaLectura: Long = 0L,
+    onConectar: () -> Unit = {},
+    onDesconectar: () -> Unit = {}
+) {
     // Scaffold: estructura base de la pantalla, con la barra de navegación abajo
     Scaffold(
         bottomBar = { NavBar(pantallaActual, onCambiarPantalla) }
@@ -54,38 +69,38 @@ fun EstadoActual(pantallaActual: String, onCambiarPantalla: (String) -> Unit) {
             // Título
             Text("Estado Actual - Sala", fontSize = 24.sp)
 
-            // Estado conexión
-            Text("Arduino conectado!",
-                color = Color(0xFF2EB82E),
-                fontWeight = FontWeight.Bold)
-            Text("Actualizado hace 3 min", fontSize = 11.sp)
+            // Estado de la conexión Bluetooth + botón para conectar/desconectar
+            FilaConexion(estado, nombreDispositivo, ultimaLectura, onConectar, onDesconectar)
 
-            // Foto sala
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp)
-                .background(Color.LightGray),
-                contentAlignment = Alignment.Center)
-            {
-                Text("Foto de la sala")
-            }
+            // Foto de la sala (res/drawable/foto_sala.jpg)
+            Image(
+                painter = painterResource(id = R.drawable.foto_sala),
+                contentDescription = "Foto de la sala",
+                contentScale = ContentScale.Crop, // recorta para llenar el espacio sin deformarse
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
 
             // Espacio vacío del diseño
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Tarjetas de sensores
-            TarjetaSensor(
-                "Luminosidad", "300 Lux", alerta = false,
-                icono = Icons.Outlined.Lightbulb
-            )
-            TarjetaSensor(
-                "Temperatura", "15° C", alerta = true,
-                icono = Icons.Outlined.Thermostat
-            )
-            TarjetaSensor(
-                "CO2", "520 ppm", alerta = false,
-                icono = Icons.Outlined.Co2
-            )
+            // Tarjetas de sensores: una por cada sensor de la lista
+            for (sensor in sensores) {
+                TarjetaSensor(
+                    nombre = sensor.nombre,
+                    valor = sensor.valorTexto(),
+                    alerta = sensor.fueraDeRango(),
+                    icono = sensor.icono
+                )
+            }
+
+            // Panel para probar las notificaciones (ver PanelPruebas.kt)
+            // (se oculta mientras el Arduino está conectado, porque él manda los valores reales)
+            if (MODO_PRUEBAS && estado != EstadoConexion.CONECTADO) {
+                PanelPruebas(sensores, onCambiarValor, onSoltar)
+            }
         }
     }
 }
@@ -140,6 +155,52 @@ fun TarjetaSensor(nombre: String, valor: String, alerta: Boolean, icono: ImageVe
                 tint = Color(103, 80, 164),
                 modifier = Modifier.size(42.dp)
             )
+        }
+    }
+}
+
+// Fila con el estado de la conexión con el Arduino y el botón Conectar / Desconectar
+@Composable
+fun FilaConexion(
+    estado: EstadoConexion,
+    nombreDispositivo: String,
+    ultimaLectura: Long,
+    onConectar: () -> Unit,
+    onDesconectar: () -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically)
+    {
+        Column(modifier = Modifier.weight(1f)) {
+            when (estado) {
+                EstadoConexion.CONECTADO -> {
+                    Text("Arduino conectado! ($nombreDispositivo)",
+                        color = Color(0xFF2EB82E),
+                        fontWeight = FontWeight.Bold)
+                    val texto = if (ultimaLectura == 0L) "Esperando datos..."
+                        else "Última lectura: " + java.text.SimpleDateFormat(
+                            "HH:mm:ss", java.util.Locale.getDefault()
+                        ).format(java.util.Date(ultimaLectura))
+                    Text(texto, fontSize = 11.sp)
+                }
+                EstadoConexion.CONECTANDO -> {
+                    Text("Conectando con $nombreDispositivo...",
+                        color = Color(0xFFFFA000),
+                        fontWeight = FontWeight.Bold)
+                }
+                EstadoConexion.DESCONECTADO -> {
+                    Text("Arduino desconectado",
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Bold)
+                    Text("Mostrando valores de prueba", fontSize = 11.sp)
+                }
+            }
+        }
+
+        when (estado) {
+            EstadoConexion.CONECTADO -> OutlinedButton(onClick = onDesconectar) { Text("Desconectar") }
+            EstadoConexion.CONECTANDO -> {}
+            EstadoConexion.DESCONECTADO -> Button(onClick = onConectar) { Text("Conectar") }
         }
     }
 }

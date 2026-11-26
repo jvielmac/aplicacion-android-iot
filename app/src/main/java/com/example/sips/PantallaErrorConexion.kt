@@ -20,9 +20,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import com.example.sips.ui.theme.SipsTheme
+
+// Se muestra cuando falla o se corta la conexión con el Arduino
 @Composable
-fun PantallaErrorConexion() {
+fun PantallaErrorConexion(
+    onReintentar: () -> Unit = {},
+    onVolver: () -> Unit = {}
+) {
     Scaffold { innerPadding ->
 
         Column(modifier = Modifier
@@ -49,6 +57,17 @@ fun PantallaErrorConexion() {
                 fontSize = 20.sp,
                 lineHeight = 28.sp,
                 textAlign = TextAlign.Center)
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Volver a intentar la conexión (abre la lista de dispositivos)
+            Button(onClick = onReintentar, modifier = Modifier.fillMaxWidth()) {
+                Text("Reintentar conexión")
+            }
+            // Volver a la pantalla principal sin conectar (usa los valores de prueba)
+            OutlinedButton(onClick = onVolver, modifier = Modifier.fillMaxWidth()) {
+                Text("Volver")
+            }
         }
     }
 }

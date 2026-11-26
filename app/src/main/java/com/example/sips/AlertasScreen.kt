@@ -4,34 +4,51 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Co2
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Thermostat
-import androidx.compose.ui.graphics.vector.ImageVector
 
 
-// Pantalla de Alertas (solo diseño, datos de ejemplo)
+// Pantalla de Alertas: muestra el historial real de anomalías detectadas
+// alertas: lista de alertas (la más nueva primero)
+// onBorrar: función que entrega MainActivity para vaciar el historial
 @Composable
-fun AlertasScreen(modifier: Modifier = Modifier) {
+fun AlertasScreen(
+    alertas: List<Alerta>,
+    onBorrar: () -> Unit,
+    modifier: Modifier = Modifier,
+    conectado: Boolean = false
+) {
+    // Controla si se muestra la ventana "¿Seguro que quieres borrar?"
+    var mostrarConfirmacion by remember { mutableStateOf(false) }
+
     Column(modifier = modifier
         .fillMaxSize()
         .padding(16.dp)
@@ -44,26 +61,64 @@ fun AlertasScreen(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold)
 
         // Estado conexión
-        Text("Arduino conectado!",
-            color = Color(0xFF2EB82E),
+        Text(if (conectado) "Arduino conectado!" else "Arduino desconectado",
+            color = if (conectado) Color(0xFF2EB82E) else Color.Gray,
             fontWeight = FontWeight.Bold)
 
-        // Lista de alertas (de ejemplo)
-        TarjetaAlerta(
-            Icons.Filled.Thermostat,
-            "Temperatura baja",
-            "15° C",
-            "Hoy, 15:10")
-        TarjetaAlerta(
-            Icons.Filled.Co2,
-            "CO2 alto",
-            "1200 ppm",
-            "Ayer, 18:45")
-        TarjetaAlerta(
-            Icons.Filled.Lightbulb,
-            "Poca luz",
-            "80 Lux",
-            "Ayer, 09:30")
+        // Cantidad de alertas + botón para borrar
+        Row(modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically)
+        {
+            Text("${alertas.size} alertas registradas",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.weight(1f))
+
+            OutlinedButton(
+                onClick = { mostrarConfirmacion = true },
+                enabled = alertas.isNotEmpty() // desactivado si no hay nada que borrar
+            ) {
+                Icon(Icons.Outlined.Delete, contentDescription = null,
+                    modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Borrar historial")
+            }
+        }
+
+        if (alertas.isEmpty()) {
+            // Mensaje cuando no hay alertas
+            Text("No hay alertas registradas.\nCuando un sensor salga de su rango normal, aparecerá aquí.",
+                fontSize = 14.sp,
+                color = Color.Gray)
+        } else {
+            // Una tarjeta por cada alerta
+            for (alerta in alertas) {
+                TarjetaAlerta(
+                    icono = iconoDe(alerta.sensor),
+                    titulo = alerta.titulo,
+                    valor = alerta.valor,
+                    hora = formatearFecha(alerta.fecha)
+                )
+            }
+        }
+    }
+
+    // Ventana de confirmación antes de borrar
+    if (mostrarConfirmacion) {
+        AlertDialog(
+            onDismissRequest = { mostrarConfirmacion = false },
+            title = { Text("Borrar historial") },
+            text = { Text("¿Seguro que quieres borrar todas las alertas? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    onBorrar()
+                    mostrarConfirmacion = false
+                }) { Text("Borrar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarConfirmacion = false }) { Text("Cancelar") }
+            }
+        )
     }
 }
 
@@ -91,13 +146,17 @@ fun TarjetaAlerta(icono: ImageVector, titulo: String, valor: String, hora: Strin
     }
 }
 
-// Vista previa: pantalla de alertas con la barra de abajo (NavBar está en BarraInferior.kt)
+// Vista previa con alertas de ejemplo
 @Preview(showBackground = true)
 @Composable
 fun AlertasPreview() {
+    val ejemplo = listOf(
+        Alerta("Temperatura", "Temperatura baja", "15 °C", System.currentTimeMillis()),
+        Alerta("CO2", "CO2 alto", "1200 ppm", System.currentTimeMillis() - 86_400_000)
+    )
     Scaffold(
         bottomBar = { NavBar(pantallaActual = "HistorialAlertas", onCambiarPantalla = {}) }
     ) { innerPadding ->
-        AlertasScreen(modifier = Modifier.padding(innerPadding))
+        AlertasScreen(alertas = ejemplo, onBorrar = {}, modifier = Modifier.padding(innerPadding))
     }
 }

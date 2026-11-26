@@ -53,5 +53,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation("androidx.compose.material:material-icons-extended")
+    // Íconos de Material (Icons.Outlined..., Icons.Filled...). Google dejó de actualizarlos
+    // en la versión 1.7.x, así que se indica la versión fija para que siempre se descarguen
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 }
